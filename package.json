@@ -1,0 +1,46 @@
+{
+  "name": "wlt-cli",
+  "version": "0.1.0",
+  "description": "Minimal Bitcoin wallet CLI for mainnet/testnet",
+  "type": "module",
+  "bin": {
+    "wlt": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "buildPsbt": "tsx scripts/buildPsbt.ts",
+    "broadcastPsbt": "tsx scripts/broadcast.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "engines": {
+    "node": ">=24.7.0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.10.1",
+    "@mempool/electrum-client": "^1.1.9",
+    "bip32": "^5.0.0",
+    "bip39": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.7",
+    "coinselect": "^3.1.13",
+    "tiny-secp256k1": "^2.2.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.0",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.0.18"
+  }
+}
