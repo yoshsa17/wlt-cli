@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMnemonic } from "../src/domain/mnemonic.js";
+import { parseMnemonic } from "../src/domain/valueObject/mnemonic.js";
 import { SoftwareKeySource } from "../src/domain/keySource/SoftwareKeySource.js";
 
 const TEST_MNEMONIC = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";

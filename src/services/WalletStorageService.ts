@@ -4,13 +4,13 @@ import { constants as fsConstants, promises as fs } from "node:fs";
 import BIP32Factory from "bip32";
 import * as bip39 from "bip39";
 import * as ecc from "tiny-secp256k1";
-import { parseWalletName, type WalletName } from "../domain/walletName.js";
-import { Wallet } from "../domain/wallet/Wallet.js";
+import { parseWalletName, type WalletName } from "../domain/valueObject/walletName.js";
+import type { WalletPassword } from "../domain/valueObject/walletPassword.js";
+import { Wallet, type KeySourceDataFile, type WalletFile } from "../domain/wallet/Wallet.js";
 import type { Result } from "../types/utils.js";
 import { BITCOIN_NETWORK_BY_NAME } from "../domain/wallet/network.js";
 import { decryptPayload, encryptPayload } from "../utils/crypto.js";
 import { Err, Ok } from "../utils/result.js";
-import { WalletKeySourceFile, WalletFile } from "../types/wallet.js";
 import type { EncryptedPayload, EncryptedWalletFile } from "../types/crypto.js";
 
 const bip32 = BIP32Factory(ecc);
@@ -21,6 +21,7 @@ const APP_DIRECTORY_MODE = 0o700; // rwx------
 const WALLET_FILE_MODE = 0o600; // rw-------
 const APP_DIR = path.join(os.homedir(), "", APP_DIRECTORY_NAME);
 const WALLET_FILE_DIR = path.join(APP_DIR, WALLET_DIRECTORY_NAME);
+const MAX_WALLET_FILE_SIZE_BYTES = 1024 * 1024; // 1 Mib
 
 export class WalletStorageService {
   /**
@@ -35,20 +36,21 @@ export class WalletStorageService {
   /**
    * Returns the local file path for a wallet name.
    */
-  getWalletPath = (walletName: string): string => this.getWalletFilePathByName(walletName);
+  getWalletPath = (walletName: WalletName): string => this.getWalletFilePathByName(walletName);
 
   /**
    * Returns the local wallet file path for a wallet name.
    */
-  getWalletFilePathByName = (walletName: string): string =>
+  getWalletFilePathByName = (walletName: WalletName): string =>
     path.join(WALLET_FILE_DIR, `${walletName}${WALLET_FILE_EXTENSION}`);
 
   /**
    * Encrypts and stores a wallet file on local disk.
    */
-  saveToLocal = async (wallet: WalletFile, password: string): Promise<Result<void, string>> => {
+  saveToLocal = async (wallet: WalletFile, password: WalletPassword): Promise<Result<void, string>> => {
     try {
-      const walletFilePath = this.getWalletFilePathByName(wallet.name);
+      const validatedWalletName = this.validateWalletName(wallet.name);
+      const walletFilePath = this.getWalletFilePathByName(validatedWalletName);
       const readableWalletFileResult = await this.checkWalletFileReadable(walletFilePath);
       if (readableWalletFileResult.isOk) {
         return Err(`Wallet already exists at ${walletFilePath}.`);
@@ -65,7 +67,8 @@ export class WalletStorageService {
       return Ok();
     } catch (error) {
       if (this.isAlreadyExistsError(error)) {
-        return Err(`Wallet already exists at ${this.getWalletFilePathByName(wallet.name)}.`);
+        const validatedWalletName = this.validateWalletName(wallet.name);
+        return Err(`Wallet already exists at ${this.getWalletFilePathByName(validatedWalletName)}.`);
       }
       if (error instanceof Error) {
         return Err(error.message);
@@ -85,14 +88,15 @@ export class WalletStorageService {
         .filter((entry) => entry.isFile() && entry.name.endsWith(WALLET_FILE_EXTENSION))
         .map((entry) => entry.name.slice(0, -WALLET_FILE_EXTENSION.length));
 
-      const walletNames = walletNameStrings.map((walletName) => {
+      const walletNames: WalletName[] = [];
+      for (const walletName of walletNameStrings) {
         const walletNameResult = parseWalletName(walletName);
-        if (!walletNameResult.isOk) {
-          throw new Error(walletNameResult.error);
+        if (walletNameResult.isOk) {
+          walletNames.push(walletNameResult.value);
         }
 
-        return walletNameResult.value;
-      });
+        // skip invalid file name
+      }
 
       return walletNames.sort((left, right) => left.localeCompare(right));
     } catch (error) {
@@ -107,7 +111,7 @@ export class WalletStorageService {
   /**
    * Loads and decrypts a wallet file from local disk.
    */
-  loadWallet = async (walletName: string, password: string): Promise<Result<Wallet, string>> => {
+  loadWallet = async (walletName: WalletName, password: WalletPassword): Promise<Result<Wallet, string>> => {
     try {
       const walletFilePath = this.getWalletFilePathByName(walletName);
       const checkResult = await this.checkWalletFileReadable(walletFilePath);
@@ -178,6 +182,11 @@ export class WalletStorageService {
   };
 
   private readEncryptedWalletFile = async (walletFilePath: string): Promise<EncryptedWalletFile> => {
+    const walletFileStats = await fs.stat(walletFilePath);
+    if (walletFileStats.size > MAX_WALLET_FILE_SIZE_BYTES) {
+      throw new Error("Wallet file is too large.");
+    }
+
     const raw = await fs.readFile(walletFilePath, "utf8");
     return this.validateEncryptedWalletFile(JSON.parse(raw));
   };
@@ -217,11 +226,11 @@ export class WalletStorageService {
       fingerprint: v.fingerprint.trim().toLowerCase(),
       xpub: this.validateXpub(v.xpub),
       createdAt: v.createdAt,
-      keySource: this.validateWalletKeySourceFile(v.keySource),
+      keySource: this.validateKeySourceDataFile(v.keySource),
     };
   };
 
-  private validateWalletKeySourceFile = (value: unknown): WalletKeySourceFile | undefined => {
+  private validateKeySourceDataFile = (value: unknown): KeySourceDataFile | undefined => {
     if (value === undefined) {
       return undefined;
     }
@@ -230,7 +239,7 @@ export class WalletStorageService {
       throw new Error("Wallet key source is not a valid object.");
     }
 
-    const keySource = value as Partial<WalletKeySourceFile>;
+    const keySource = value as Partial<KeySourceDataFile>;
     if (keySource.type === "watch_only") {
       return { type: "watch_only" };
     }
@@ -290,7 +299,7 @@ export class WalletStorageService {
     };
   };
 
-  private validateWalletName = (value: unknown): string => {
+  private validateWalletName = (value: unknown): WalletName => {
     if (typeof value !== "string") {
       throw new Error("Wallet name is missing.");
     }
@@ -303,7 +312,7 @@ export class WalletStorageService {
       throw new Error("Wallet name must use lowercase letters, numbers, and hyphen (-) only.");
     }
 
-    return normalizedValue;
+    return normalizedValue as WalletName;
   };
 
   private validateMnemonic = (value: unknown): string => {

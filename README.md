@@ -1,3 +1,5 @@
-# wltcli
+# WLT CLI
 
-Minimal Bitcoin offline signer CLI in TypeScript.
+Minimal Bitcoin wallet CLI in TypeScript.
+
+![wltcli screenshot](./example.png)

@@ -1,4 +1,4 @@
-import type { NetworkName, ScriptType } from "../../types/wallet.js";
+import type { NetworkName, ScriptType } from "./Wallet.js";
 import { COIN_TYPE_BY_NETWORK } from "./network.js";
 
 const SCRIPT_PURPOSE: Record<ScriptType, 44 | 84> = {

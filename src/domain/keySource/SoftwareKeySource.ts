@@ -2,13 +2,13 @@ import BIP32Factory from "bip32";
 import type { HDSigner, Psbt } from "bitcoinjs-lib";
 import * as bip39 from "bip39";
 import * as ecc from "tiny-secp256k1";
-import type { Mnemonic } from "../mnemonic.js";
+import type { Mnemonic } from "../valueObject/mnemonic.js";
 import type { Result } from "../../types/utils.js";
 import { Err, Ok } from "../../utils/result.js";
 import { BITCOIN_NETWORK_BY_NAME } from "../wallet/network.js";
 import { getAccountPath } from "../wallet/walletPaths.js";
 import type { KeySource, WalletAccountData } from "./KeySource.js";
-import type { NetworkName, ScriptType } from "../../types/wallet.js";
+import type { NetworkName, ScriptType } from "../wallet/Wallet.js";
 
 const bip32 = BIP32Factory(ecc);
 

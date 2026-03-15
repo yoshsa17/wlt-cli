@@ -1,5 +1,5 @@
 import * as bitcoin from "bitcoinjs-lib";
-import type { NetworkName } from "../../types/wallet.js";
+import type { NetworkName } from "./Wallet.js";
 
 export const BITCOIN_NETWORK_BY_NAME: Readonly<Record<NetworkName, bitcoin.Network>> = {
   mainnet: bitcoin.networks.bitcoin,

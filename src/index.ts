@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 
 import { AppScreen, type AppScreen as AppScreenType, type AppState } from "./state.js";
-import { executeCreateWallet } from "./screens/CreateWalletScreen.js";
-import { executeGetAddressScreen } from "./screens/GetAddressScreen.js";
-import { executeSettings } from "./screens/SettingsScreen.js";
-import { executeSignPsbt } from "./screens/SignPsbtScreen.js";
-import { executeStart } from "./screens/StartScreen.js";
-import { executeWalletHome } from "./screens/WalletHomeScreen.js";
-import { renderHeader } from "./screens/ui/header.js";
+import { executeBroadcast } from "./screens/Broadcast/BroadcastScreen.js";
+import { executeGetAddress } from "./screens/GetAddress/GetAddressScreen.js";
+import { executeShowAddressQr } from "./screens/GetAddress/ShowAddressQrScreen.js";
+import { renderHeader } from "./screens/common/header.js";
+import { executeCreateWallet } from "./screens/CreateWallet/CreateWalletScreen.js";
+import { executeCreatePsbt } from "./screens/Send/SendScreen.js";
+import { executeSettings } from "./screens/Settings/SettingsScreen.js";
+import { executeShowXpubQr } from "./screens/Settings/ShowXpubQrScreen.js";
+import { executeSignPsbt } from "./screens/SignPsbt/SignPsbtScreen.js";
+import { executeStart } from "./screens/Start/StartScreen.js";
+import { executeWalletMenu } from "./screens/WalletMenu/WalletMenuScreen.js";
 import { clearScreen } from "./utils/terminal.js";
 
 type ScreenExecutor = (state: AppState) => Promise<AppState>;
@@ -15,9 +19,13 @@ type ScreenExecutor = (state: AppState) => Promise<AppState>;
 const screenExecutors: Partial<Record<AppScreenType, ScreenExecutor>> = {
   [AppScreen.Start]: executeStart,
   [AppScreen.CreateWallet]: executeCreateWallet,
-  [AppScreen.WalletMenu]: executeWalletHome,
-  [AppScreen.GetAddress]: executeGetAddressScreen,
+  [AppScreen.WalletMenu]: executeWalletMenu,
+  [AppScreen.CreatePsbt]: executeCreatePsbt,
+  [AppScreen.Broadcast]: executeBroadcast,
+  [AppScreen.Addresses]: executeGetAddress,
   [AppScreen.Settings]: executeSettings,
+  [AppScreen.ShowAddressQr]: executeShowAddressQr,
+  [AppScreen.ShowXpubQr]: executeShowXpubQr,
   [AppScreen.SignPsbt]: executeSignPsbt,
 };
 
@@ -28,7 +36,6 @@ const run = async (appState: AppState): Promise<void> => {
     clearScreen();
     renderHeader(state);
 
-    // render main screen
     const executeScreen = screenExecutors[state.screen];
     if (!executeScreen) {
       throw new Error(`No executor configured for screen "${state.screen}".`);

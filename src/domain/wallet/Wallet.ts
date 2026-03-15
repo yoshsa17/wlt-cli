@@ -1,13 +1,11 @@
 import BIP32Factory from "bip32";
 import { payments } from "bitcoinjs-lib";
 import * as ecc from "tiny-secp256k1";
-import { parseMnemonic, type Mnemonic } from "../mnemonic.js";
+import { parseMnemonic, type Mnemonic } from "../valueObject/mnemonic.js";
 import { SoftwareKeySource } from "../keySource/SoftwareKeySource.js";
-import { parseWalletName, type WalletName } from "../walletName.js";
+import { parseWalletName, type WalletName } from "../valueObject/walletName.js";
 import { BITCOIN_NETWORK_BY_NAME } from "./network.js";
-import { type NetworkName, type ScriptType, type WalletFile } from "../../types/wallet.js";
-
-const bip32 = BIP32Factory(ecc);
+import { ValueOf } from "../../types/utils.js";
 
 type KeySourceData =
   | {
@@ -17,6 +15,36 @@ type KeySourceData =
   | {
       type: "watch_only";
     };
+
+export type KeySourceDataFile =
+  | {
+      type: "software";
+      mnemonic: string;
+    }
+  | {
+      type: "watch_only";
+    };
+
+export type NetworkName = "mainnet" | "regtest" | "testnet";
+
+export const ScriptType = {
+  P2pkh: "p2pkh",
+  P2wpkh: "p2wpkh",
+} as const;
+export type ScriptType = ValueOf<typeof ScriptType>;
+
+export type WalletFile = {
+  version: 1;
+  name: string;
+  network: NetworkName;
+  scriptType: ScriptType;
+  fingerprint: string;
+  xpub: string;
+  createdAt: string;
+  keySource?: KeySourceDataFile;
+};
+
+const bip32 = BIP32Factory(ecc);
 
 export class Wallet {
   readonly name: WalletName;
@@ -79,10 +107,6 @@ export class Wallet {
       keySourceData: Wallet.getKeySourceDataFromFile(file),
     });
   }
-
-  getXpub = async (): Promise<string> => {
-    return this.xpub;
-  };
 
   deriveAddress = (index = 0, change: 0 | 1 = 0): string => {
     const btcNetwork = BITCOIN_NETWORK_BY_NAME[this.network];

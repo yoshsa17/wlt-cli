@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { parseMnemonic } from "../src/domain/mnemonic.js";
+import { parseMnemonic } from "../src/domain/valueObject/mnemonic.js";
 import { Wallet } from "../src/domain/wallet/Wallet.js";
-import { parseWalletName } from "../src/domain/walletName.js";
+import { parseWalletName } from "../src/domain/valueObject/walletName.js";
 
 const TEST_XPUB =
   "tpubDC8msFGeGuwnKG9Upg7DM2b4DaRqg3CUZa5g8v2SRQ6K4NSkxUgd7HsL2XVWbVm39yBA4LAxysQAm397zwQSQoQgewGiYZqrA9DsP4zbQ1M";

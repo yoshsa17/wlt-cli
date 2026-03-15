@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMnemonic } from "../src/domain/mnemonic.js";
+import { parseMnemonic } from "../src/domain/valueObject/mnemonic.js";
 
 describe("mnemonic", () => {
   it("accepts a valid bip39 mnemonic", () => {

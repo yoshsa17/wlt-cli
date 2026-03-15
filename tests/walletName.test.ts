@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isValidWalletName, parseWalletName } from "../src/domain/walletName.js";
+import {
+  isValidWalletName,
+  parseWalletName,
+} from "../src/domain/valueObject/walletName.js";
 
 describe("walletName", () => {
   it("accepts a valid lowercase wallet name", () => {
