@@ -30,6 +30,9 @@ type ElectrumClientInstance = {
   close(): void;
 };
 
+/**
+ * Thin wrapper around an Electrum RPC client.
+ */
 export class ElectrumClient {
   #client: ElectrumClientInstance;
 
@@ -39,6 +42,9 @@ export class ElectrumClient {
     }) as ElectrumClientInstance;
   }
 
+  /**
+   * Return the default Electrum connection settings for a supported network.
+   */
   // TODO: make it customizable
   // see: https://blog.blockstream.com/real-time-bitcoin-data-at-scale-blockstream-explorer-api-launches-electrum-rpc/?utm_source=chatgpt.com
   static getConnectionConfig = (network: NetworkName): ElectrumConnectionConfig => {
@@ -54,12 +60,18 @@ export class ElectrumClient {
     }
   };
 
+  /**
+   * Convert an address into the Electrum scripthash format.
+   */
   static toScriptHash = (address: string, network: Network): string => {
     const outputScript = bitcoinAddress.toOutputScript(address, network);
     const digest = createHash("sha256").update(outputScript).digest();
     return Buffer.from(digest).reverse().toString("hex");
   };
 
+  /**
+   * Map a fee level to the target confirmation block count used for estimation.
+   */
   static getFeeTargetBlockCount = (feeLevel: FeeLevel): number => {
     switch (feeLevel) {
       case "HIGH":
@@ -72,8 +84,14 @@ export class ElectrumClient {
     }
   };
 
+  /**
+   * Open the underlying Electrum connection.
+   */
   connect = (): Promise<void> => this.#client.connect();
 
+  /**
+   * Estimate a fee rate for the requested fee level and return it as sats/vbyte.
+   */
   estimateFee = async (feeLevel: FeeLevel): Promise<Sats> => {
     const blockCount = ElectrumClient.getFeeTargetBlockCount(feeLevel);
     const feeRateBtcPerKilobyte = await this.#client.blockchainEstimatefee(blockCount);
@@ -94,17 +112,29 @@ export class ElectrumClient {
     return toSats(BigInt(feeRateSatsPerVbyte));
   };
 
+  /**
+   * Fetch all unspent outputs for an address.
+   */
   listUnspent = (address: string, network: Network): Promise<ElectrumUtxo[]> => {
     const scriptHash = ElectrumClient.toScriptHash(address, network);
     return this.#client.blockchainScripthash_listunspent(scriptHash);
   };
 
+  /**
+   * Fetch a transaction by txid.
+   */
   getTransaction = (txHash: string, verbose?: boolean): Promise<string> =>
     this.#client.blockchainTransaction_get(txHash, verbose);
 
+  /**
+   * Broadcast a raw transaction hex string.
+   */
   broadcast = (rawTransactionHex: string): Promise<string> =>
     this.#client.blockchainTransaction_broadcast(rawTransactionHex);
 
+  /**
+   * Close the underlying Electrum connection.
+   */
   close = (): void => {
     this.#client.close();
   };

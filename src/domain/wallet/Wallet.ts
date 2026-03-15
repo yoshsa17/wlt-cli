@@ -46,6 +46,9 @@ export type WalletFile = {
 
 const bip32 = BIP32Factory(ecc);
 
+/**
+ * Domain model for a wallet with public account data and key source data.
+ */
 export class Wallet {
   readonly name: WalletName;
   readonly network: NetworkName;
@@ -73,6 +76,9 @@ export class Wallet {
     this.keySourceData = params.keySourceData;
   }
 
+  /**
+   * Build a software wallet from mnemonic-based account data.
+   */
   static async create(params: {
     name: WalletName;
     network: NetworkName;
@@ -96,6 +102,9 @@ export class Wallet {
     });
   }
 
+  /**
+   * Rehydrate a domain wallet from the persisted wallet file shape.
+   */
   static fromFile(file: WalletFile): Wallet {
     return new Wallet({
       name: Wallet.parseWalletName(file.name),
@@ -108,6 +117,9 @@ export class Wallet {
     });
   }
 
+  /**
+   * Derive a receive or change address from the account xpub.
+   */
   deriveAddress = (index = 0, change: 0 | 1 = 0): string => {
     const btcNetwork = BITCOIN_NETWORK_BY_NAME[this.network];
     const accountNode = bip32.fromBase58(this.xpub, btcNetwork);
@@ -129,6 +141,9 @@ export class Wallet {
     return address;
   };
 
+  /**
+   * Convert the domain wallet into the persisted wallet file shape.
+   */
   toFile = (): WalletFile => {
     return {
       version: 1,

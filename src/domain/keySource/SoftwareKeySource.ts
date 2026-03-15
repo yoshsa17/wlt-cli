@@ -21,6 +21,9 @@ const createHdSigner = (node: ReturnType<typeof bip32.fromSeed>): HDSigner => {
   };
 };
 
+/**
+ * Local software key source backed by a BIP39 mnemonic.
+ */
 export class SoftwareKeySource implements KeySource {
   #mnemonic: Mnemonic;
 
@@ -28,6 +31,9 @@ export class SoftwareKeySource implements KeySource {
     this.#mnemonic = mnemonic;
   }
 
+  /**
+   * Derive account-level public data for the requested script type and network.
+   */
   getAccountData = async (scriptType: ScriptType, network: NetworkName): Promise<WalletAccountData> => {
     const btcNetwork = BITCOIN_NETWORK_BY_NAME[network];
 
@@ -42,6 +48,10 @@ export class SoftwareKeySource implements KeySource {
 
     return accountData;
   };
+
+  /**
+   * Sign any PSBT inputs that match keys derived from this mnemonic.
+   */
   signPsbt = async (
     psbt: Psbt,
     scriptType: ScriptType,
